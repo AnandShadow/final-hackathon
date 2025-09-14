@@ -469,6 +469,7 @@ def create_weather_responsive_plot(df, city, metric, forecast_df=None, weather_c
     
     # Forecast data
     if forecast_df is not None:
+        forecast_df = forecast_df.copy()  # Fix pandas warning
         forecast_df['ds'] = pd.to_datetime(forecast_df['ds'])
         
         fig.add_trace(go.Scatter(
@@ -589,9 +590,10 @@ def main():
     
     with forecast_cols[0]:
         # Temperature forecast
-        model = joblib.load(f"data/prophet_{selected_city}_temperature.joblib") if os.path.exists(f"data/prophet_{selected_city}_temperature.joblib") else None
-        if model:
-            future = model.make_future_dataframe(periods=24, freq='H')
+        model_path = f"data/prophet_{selected_city}_temperature.joblib"
+        if os.path.exists(model_path):
+            model = joblib.load(model_path)
+            future = model.make_future_dataframe(periods=24, freq='h')  # Use 'h' instead of 'H'
             forecast = model.predict(future)
             fig = create_weather_responsive_plot(
                 df, selected_city, 'temperature', 
