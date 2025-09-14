@@ -1,0 +1,12 @@
+pandas
+numpy
+prophet
+scikit-learn
+tensorflow
+matplotlib
+plotly
+streamlit
+joblib
+python-dotenv
+twilio
+requests
