@@ -1,9 +1,10 @@
-# Ultra-minimal Streamlit Cloud deployment
+# Climate AI Dashboard with Real Weather Data
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 from datetime import datetime, timedelta
+import requests
 
 # Page configuration
 st.set_page_config(
@@ -25,6 +26,27 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_weather_data(city="London"):
+    """Get real weather data from OpenWeatherMap API"""
+    api_key = "8367458f8032fe7eb4461ec8788e341c"
+    
+    try:
+        url = (f"http://api.openweathermap.org/data/2.5/weather"
+               f"?q={city}&appid={api_key}&units=metric")
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.warning(f"API Error {response.status_code}. Using demo data.")
+            return create_demo_data(city)
+            
+    except Exception:
+        st.info(f"Network error. Using demo data for {city}")
+        return create_demo_data(city)
+
 
 def create_demo_data(city="London"):
     """Create simple demo weather data"""
@@ -65,12 +87,18 @@ def main():
     cities = ["London", "New York", "Tokyo", "Mumbai", "Sydney"]
     selected_city = st.sidebar.selectbox("🏙️ Select City", cities)
     
-    # Get demo data
-    weather_data = create_demo_data(selected_city)
+    # Get real weather data
+    weather_data = get_weather_data(selected_city)
     
     # Display current weather
     st.subheader(f"📍 Current Weather in {weather_data['name']}")
-    st.info("**Condition:** Clear Sky - Demo Data")
+    
+    if 'weather' in weather_data:
+        weather_condition = weather_data['weather'][0]['main']
+        weather_desc = weather_data['weather'][0]['description'].title()
+        st.info(f"**Condition:** {weather_condition} - {weather_desc}")
+    else:
+        st.info("**Condition:** Clear Sky - Demo Data")
     
     # Weather metrics
     col1, col2, col3, col4 = st.columns(4)
